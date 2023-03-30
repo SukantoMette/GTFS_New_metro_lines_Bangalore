@@ -1,0 +1,17 @@
+route_id,route_short_name,route_long_name,route_desc,route_type
+M_PW,Metro Purple Whitefield,Metro Purple Whitefield to Challaghatta,-1,1
+M_PC,Metro Purple Challaghatta,Metro Purple Challaghatta to Whitefield,-1,1
+M_GM,Metro Green Madavara,Metro Green Madavara to Silk Institute,-1,1
+M_GS,Metro Green Silk Institute,Metro Green Silk Institute to Madavara,-1,1
+M_OJ,Metro Orange Jaya Prakash Nagara Phase 4,Metro Orange Jaya Prakash Nagara Phase 4 to Kempapura,-1,1
+M_OK,Metro Orange Kempapura,Metro Orange Kempapura to Jaya Prakash Nagara Phase 4,-1,1
+M_YR,Metro Yellow Rashtreeya Vidyalaya Road,Metro Yellow Rashtreeya Vidyalaya Road to Bommasandra,-1,1
+M_YB,Metro Yellow Bommasandra,Metro Yellow Bommasandra to Rashtreeya Vidyalaya Road,-1,1
+M_SH,Metro Silver Hosahalli,Metro Silver Hosahalli to Kadabagere,-1,1
+M_SK,Metro Silver Kadabagere,Metro Silver Kadabagere to Hosahalli,-1,1
+M_RK,Metro Red Kempapura,Metro Red Kempapura to Sarjapura,-1,1
+M_RS,Metro Red Sarjapura,Metro Red Sarjapura to Kempapura,-1,1
+M_BS,Metro Blue Silkboard,Metro Blue Silkboard to KIAL terminal,-1,1
+M_BK,Metro Blue KIAL terminal,Metro Blue KIAL terminal to Silkboard,-1,1
+M_PiK,Metro Pink Kalena Agrahara (formerly Gottigere),Metro Pink Kalena Agrahara (formerly Gottigere) to Nagawara,-1,1
+M_PiN,Metro Pink Nagawara,Metro Pink Nagawara to Kalena Agrahara (formerly Gottigere),-1,1
