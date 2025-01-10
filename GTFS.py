@@ -36,35 +36,33 @@ def create_stops_file(stops_data_path: str, GTFS_data_path: str):
 
 
     '''
-    blue_line_df = pd.read_csv(f"{stops_data_path}/blue_line.csv")
     green_line_df = pd.read_csv(f"{stops_data_path}/green_line.csv")
-    orange_line_df = pd.read_csv(f"{stops_data_path}/orange_line.csv")
-    pink_line_df = pd.read_csv(f"{stops_data_path}/pink_line.csv")
     purple_line_df = pd.read_csv(f"{stops_data_path}/purple_line.csv")
-    red_line_df = pd.read_csv(f"{stops_data_path}/red_line.csv")
-    silver_line_df = pd.read_csv(f"{stops_data_path}/silver_line.csv")
-    yellow_line_df = pd.read_csv(f"{stops_data_path}/yellow_line.csv")
-
+    initial_stop_id = 100
+    purple_line_stop_id = []
+    green_line_stop_id = []
+    for x in range(purple_line_df.shape[0]):
+        purple_line_stop_id.append(initial_stop_id)
+        initial_stop_id += 1
+    for x in range(green_line_df.shape[0]):
+        green_line_stop_id.append(initial_stop_id)
+        initial_stop_id += 1
     stops_txt = defaultdict(list)
 
-    stops_txt['stop_id'] = [f"M_P_{x+1}" for x in range(purple_line_df.shape[0])] + [f"M_G_{x+1}" for x in range(green_line_df.shape[0])] + [f"M_O_{x+1}" for x in range(orange_line_df.shape[0])] + [f"M_Y_{x+1}" for x in range(yellow_line_df.shape[0])] \
-                           + [f"M_S_{x+1}" for x in range(silver_line_df.shape[0])] + [f"M_R_{x+1}" for x in range(red_line_df.shape[0])] + [f"M_B_{x+1}" for x in range(blue_line_df.shape[0])] + [f"M_Pi_{x+1}" for x in range(pink_line_df.shape[0])]
+    stops_txt['stop_id'] = [100+x for x in range(purple_line_df.shape[0] + green_line_df.shape[0])]
 
-    stops_txt['stop_name'] = list(purple_line_df["stop_name"]) + list(green_line_df["stop_name"]) + list(orange_line_df["stop_name"]) + list(yellow_line_df["stop_name"]) + list(silver_line_df["stop_name"]) + list(red_line_df["stop_name"]) \
-                             + list(blue_line_df["stop_name"]) + list(pink_line_df["stop_name"])
+    stops_txt['stop_name'] = list(purple_line_df["stop_name"]) + list(green_line_df["stop_name"])
 
-    stops_txt['stop_lat'] = list(purple_line_df["lat"]) + list(green_line_df["lat"]) + list(orange_line_df["lat"]) + list(yellow_line_df["lat"]) + list(silver_line_df["lat"]) + list(red_line_df["lat"]) \
-                             + list(blue_line_df["lat"]) + list(pink_line_df["lat"])
+    stops_txt['stop_lat'] = list(purple_line_df["lat"]) + list(green_line_df["lat"])
 
-    stops_txt['stop_lon'] = list(purple_line_df["lon"]) + list(green_line_df["lon"]) + list(orange_line_df["lon"]) + list(yellow_line_df["lon"]) + list(silver_line_df["lon"]) + list(red_line_df["lon"]) \
-                             + list(blue_line_df["lon"]) + list(pink_line_df["lon"])
-
+    stops_txt['stop_lon'] = list(purple_line_df["lon"]) + list(green_line_df["lon"])
+    stops_txt['zone_id'] = [100+x for x in range(purple_line_df.shape[0] + green_line_df.shape[0])]
     stops_txt = pd.DataFrame.from_dict(stops_txt)
+    stops_txt = stops_txt[['stop_id', 'stop_lat', 'stop_lon', 'stop_name', 'zone_id']]
 
     stops_txt.to_csv(f'{GTFS_data_path}/stops.csv', index=False)
 
-    return purple_line_df.shape[0], green_line_df.shape[0], orange_line_df.shape[0], yellow_line_df.shape[0], silver_line_df.shape[0], red_line_df.shape[0], blue_line_df.shape[0], pink_line_df.shape[0]
-
+    return purple_line_stop_id, green_line_stop_id
 
 def create_route_file(GTFS_data_path, route_id_list):
     '''
@@ -87,46 +85,23 @@ def create_route_file(GTFS_data_path, route_id_list):
     routes_dict['route_short_name'] = ['Metro Purple Whitefield',
                                        'Metro Purple Challaghatta',
                                        'Metro Green Madavara',
-                                       'Metro Green Silk Institute',
-                                       'Metro Orange Jaya Prakash Nagara Phase 4',
-                                       'Metro Orange Kempapura',
-                                       'Metro Yellow Rashtreeya Vidyalaya Road',
-                                       'Metro Yellow Bommasandra',
-                                       'Metro Silver Hosahalli',
-                                       'Metro Silver Kadabagere',
-                                       'Metro Red Kempapura',
-                                       'Metro Red Sarjapura',
-                                       'Metro Blue Silkboard',
-                                       'Metro Blue KIAL terminal',
-                                       'Metro Pink Kalena Agrahara (formerly Gottigere)',
-                                       'Metro Pink Nagawara']
+                                       'Metro Green Silk Institute']
     routes_dict['route_long_name'] = ['Metro Purple Whitefield to Challaghatta',
                                       'Metro Purple Challaghatta to Whitefield',
                                       'Metro Green Madavara to Silk Institute',
-                                      'Metro Green Silk Institute to Madavara',
-                                      'Metro Orange Jaya Prakash Nagara Phase 4 to Kempapura',
-                                      'Metro Orange Kempapura to Jaya Prakash Nagara Phase 4',
-                                      'Metro Yellow Rashtreeya Vidyalaya Road to Bommasandra',
-                                      'Metro Yellow Bommasandra to Rashtreeya Vidyalaya Road',
-                                      'Metro Silver Hosahalli to Kadabagere',
-                                      'Metro Silver Kadabagere to Hosahalli',
-                                      'Metro Red Kempapura to Sarjapura',
-                                      'Metro Red Sarjapura to Kempapura',
-                                      'Metro Blue Silkboard to KIAL terminal',
-                                      'Metro Blue KIAL terminal to Silkboard',
-                                      'Metro Pink Kalena Agrahara (formerly Gottigere) to Nagawara',
-                                      'Metro Pink Nagawara to Kalena Agrahara (formerly Gottigere)']
-    routes_dict['route_desc'] = [-1] * 16
-    routes_dict['route_type'] = [1] * 16
-
+                                      'Metro Green Silk Institute to Madavara']
+    routes_dict['route_desc'] = [-1] * 4
+    routes_dict['route_type'] = [1] * 4
+    routes_dict['agency_id'] = ['BMRCL'] * 4
     route_txt = pd.DataFrame.from_dict(routes_dict)
+    route_txt = route_txt[['route_id', 'route_short_name', 'route_long_name', 'route_desc', 'route_type', 'agency_id']]
 
     route_txt.to_csv(f'{GTFS_data_path}/route.csv', index=False)
 
     return
 
 
-def create_trips_file(trips_frequency_table, route_id_str: str):
+def create_trips_file(trips_frequency_table, route_id_str, trip_id_start):
     '''
         This function is used to create the trips table which is later used as input for another function(create_stoptimes_file) and is also used to create trips.csv file for GTFS dataset.
         This function calculate the number of trains required for each time slot for a given frequency in that time slot and then finding the arrival time of that trip.
@@ -165,19 +140,20 @@ def create_trips_file(trips_frequency_table, route_id_str: str):
         start_time = row[1]
         curr_index = index_count
 
-        for i in range(curr_index, row[5] + curr_index):
-            trips_table['trip_id'].append(f'{route_id_str}_{i + 1}')
-            trips_table['route_id'].append(route_id_str)
+        for _ in range(curr_index, row[5] + curr_index):
+            trips_table['trip_id'].append(int(trip_id_start))
+            trip_id_start += 1
+            trips_table['route_id'].append(int(route_id_str))
             trips_table['arrival time'].append(start_time)
             start_time = start_time + row[3]
             index_count += 1
 
     trips_table = pd.DataFrame.from_dict(trips_table)
 
-    return trips_table
+    return trips_table, trip_id_start
 
 
-def create_stoptimes_file(stop_times_txt, trips_table: pd.DataFrame, line_id_str: str,route_id: str, metro_line_time_difference_between_stops: list, start_point_of_trip_file: int, route_id_list: list):
+def create_stoptimes_file(stop_times_txt, trips_table: pd.DataFrame, line_id_str: str,route_id: str, metro_line_time_difference_between_stops: list, start_point_of_trip_file: int, route_id_list: list, route_id_stop_dict):
     """
         This Function is used to create the stopstimes.txt file
 
@@ -202,15 +178,11 @@ def create_stoptimes_file(stop_times_txt, trips_table: pd.DataFrame, line_id_str
         arrival_time = trips_table["arrival time"].iloc[row]
 
         for index in range(len(metro_line_time_difference_between_stops)):
-
-            stop_times_txt['trip_id'].append(trips_table["trip_id"].iloc[row])
+            stop_times_txt['trip_id'].append(int(trips_table["trip_id"].iloc[row]))
             stop_times_txt['arrival_time'].append(arrival_time)
             arrival_time = arrival_time + metro_line_time_difference_between_stops[index]
-            if route_id in route_id_list[:len(route_id_list):2]:
-                stop_times_txt['stop_id'].append(f'{line_id_str}_{index + 1}')
-            else:
-                stop_times_txt['stop_id'].append(f'{line_id_str}_{len(metro_line_time_difference_between_stops) - (index)}')
-            stop_times_txt['sequence_id'].append(index)
+            stop_times_txt['stop_id'].append(route_id_stop_dict[route_id][index])
+            stop_times_txt['stop_sequence'].append(index)
     # routes_dict['route_id'] = ['PW', 'PC', 'GM', 'GS', 'OJ', 'OK', 'YR', 'YB', 'SH', 'SK', 'RK', 'RS', 'BS', 'BK', 'PiK', 'PiN']
 
 

@@ -33,23 +33,24 @@ import pandas as pd
 def main():
     # CREATING GTFS
     METRO_SPEED = 38 # km/h
-    ROUTE_ID_LIST = ['M_PW', 'M_PC', 'M_GM', 'M_GS', 'M_OJ', 'M_OK', 'M_YR', 'M_YB', 'M_SH', 'M_SK', 'M_RK', 'M_RS', 'M_BS', 'M_BK', 'M_PiK', 'M_PiN']
-    METRO_LINE_MAP_TO_METRO_LINE_NAME_DICT = {'M_P': "purple_line",
-                                              'M_G': "green_line",
-                                              'M_O': "orange_line",
-                                              'M_Y': "yellow_line",
-                                              'M_S': "silver_line",
-                                              'M_R': "red_line",
-                                              'M_B': "blue_line",
-                                              'M_Pi': "pink_line"}
+    ROUTE_ID_LIST = [1, 2, 3, 4]
+    METRO_LINE_MAP_TO_METRO_LINE_NAME_DICT = {1: "purple_line",
+                                              3: "green_line",
+                                              2: "purple_line",
+                                              4: "green_line"
+                                              }
     STOPS_DATA_PATH = f"./stops_data"
     GTFS_DATA_PATH = f"./GTFS_data"
 
     FREQUENCY_TABLE_TO_PATH = './frequency_tables/trips time and frequency to.xlsx'
     FREQUENCY_TABLE_FRO_PATH = './frequency_tables/trips time and frequency fro.xlsx'
 
-    len_purple_line, len_green_line, len_orange_line, len_yellow_line, len_silver_line, len_red_line, len_blue_line, len_pink_line = create_stops_file(STOPS_DATA_PATH, GTFS_DATA_PATH)
-
+    purple_line_stop_id, green_line_stop_id = create_stops_file(STOPS_DATA_PATH, GTFS_DATA_PATH)
+    len_purple_line, len_green_line = len(purple_line_stop_id), len(green_line_stop_id)
+    route_id_stop_dict = {1: purple_line_stop_id,
+                          2: purple_line_stop_id[::-1],
+                          3: green_line_stop_id,
+                          4: green_line_stop_id[::-1]}
     create_route_file(GTFS_DATA_PATH, ROUTE_ID_LIST)
 
     trips_table = defaultdict(list)
@@ -61,19 +62,21 @@ def main():
     stop_times_txt = defaultdict(list)
 
     start_point_of_trip_file = 0
-
+    trip_id_start = 1000
     for route_id in ROUTE_ID_LIST:
         if route_id in ROUTE_ID_LIST[:len(ROUTE_ID_LIST):2]:
             trips_frequency_table = pd.read_excel(FREQUENCY_TABLE_TO_PATH)
-            metro_line_id = route_id[:-1]
+            metro_line_id = route_id
             consecutive_station_time_difference = time_gap(stops_data_path=STOPS_DATA_PATH, metro_name=METRO_LINE_MAP_TO_METRO_LINE_NAME_DICT[metro_line_id], metro_speed=METRO_SPEED, reverse=0)
 
         else:
             trips_frequency_table = pd.read_excel(FREQUENCY_TABLE_FRO_PATH)
-            metro_line_id = route_id[:-1]
+            metro_line_id = route_id
             consecutive_station_time_difference = time_gap(stops_data_path=STOPS_DATA_PATH, metro_name=METRO_LINE_MAP_TO_METRO_LINE_NAME_DICT[metro_line_id], metro_speed=METRO_SPEED, reverse=1)
 
-        trips_txt = pd.concat([trips_txt, create_trips_file(trips_frequency_table, route_id)], ignore_index=True)
+        trip_df, current_trip_id = create_trips_file(trips_frequency_table, route_id, trip_id_start)
+        trip_id_start = current_trip_id
+        trips_txt = pd.concat([trips_txt, trip_df], ignore_index=True)
 
         create_stoptimes_file(stop_times_txt,
                               trips_table=trips_txt,
@@ -81,32 +84,38 @@ def main():
                               route_id=route_id,
                               metro_line_time_difference_between_stops=consecutive_station_time_difference,
                               start_point_of_trip_file=start_point_of_trip_file,
-                              route_id_list=ROUTE_ID_LIST)
+                              route_id_list=ROUTE_ID_LIST,
+                              route_id_stop_dict=route_id_stop_dict)
         start_point_of_trip_file = trips_txt.shape[0]
 
 
     stop_times_txt = pd.DataFrame.from_dict(stop_times_txt)
     stop_times_txt['departure_time'] = stop_times_txt['arrival_time']
+    stop_times_txt = stop_times_txt[['stop_id', 'stop_sequence', 'arrival_time', 'trip_id', 'departure_time']]
 
     trips_txt = trips_txt.drop(columns='arrival time')
-
+    trips_txt['route_id'] = trips_txt['route_id'].astype(int)
+    trips_txt['trip_id'] = trips_txt['trip_id'].astype(int)
+    trips_txt['trip_short_name'] = 'all'
+    trips_txt['service_id'] = trips_txt['trip_id']
+    trips_txt = trips_txt[['route_id', 'trip_id', 'trip_short_name', 'service_id']]
     trips_txt.to_csv(f'{GTFS_DATA_PATH}/trips.csv', index=False)
     stop_times_txt.to_csv(f'{GTFS_DATA_PATH}/stoptimes.csv', index=False)
 
     # CREATING FARE FILES
-    stops_df = pd.read_csv(f"{GTFS_DATA_PATH}/stops.csv")
-
-    scrapped_fare_df = pd.read_csv("fare_scrapped.csv")
-    scrapped_fare_df, stop_dict = add_haversine_distance_col(scrapped_fare_df, stops_df, len_purple_line, len_green_line)
-    G_old_metro_network = get_old_metro_network(stops_df, len_purple_line, len_green_line)
-    scrapped_fare_df = add_actual_distance_col(scrapped_fare_df, stop_dict, G_old_metro_network)
-    slope, intercept = linear_regression(scrapped_fare_df)
-    G_new_metro_network = get_new_metro_network(stops_df, len_purple_line, len_green_line, len_orange_line, len_yellow_line, len_silver_line, len_red_line, len_blue_line, len_pink_line)
-
-    fare_rule_df, fare_attribute_df = create_fare_files(stops_df, scrapped_fare_df, G_new_metro_network, slope, intercept)
-
-    fare_rule_df.to_csv(f"{GTFS_DATA_PATH}/fare_rule.csv", index=False)
-    fare_attribute_df.to_csv(f"{GTFS_DATA_PATH}/fare_attribute.csv", index=False)
+    # stops_df = pd.read_csv(f"{GTFS_DATA_PATH}/stops.csv")
+    #
+    # scrapped_fare_df = pd.read_csv("fare_scrapped.csv")
+    # scrapped_fare_df, stop_dict = add_haversine_distance_col(scrapped_fare_df, stops_df, len_purple_line, len_green_line)
+    # G_old_metro_network = get_old_metro_network(stops_df, len_purple_line, len_green_line)
+    # scrapped_fare_df = add_actual_distance_col(scrapped_fare_df, stop_dict, G_old_metro_network)
+    # slope, intercept = linear_regression(scrapped_fare_df)
+    # G_new_metro_network = get_new_metro_network(stops_df, len_purple_line, len_green_line, len_orange_line, len_yellow_line, len_silver_line, len_red_line, len_blue_line, len_pink_line)
+    #
+    # fare_rule_df, fare_attribute_df = create_fare_files(stops_df, scrapped_fare_df, G_new_metro_network, slope, intercept)
+    #
+    # fare_rule_df.to_csv(f"{GTFS_DATA_PATH}/fare_rule.csv", index=False)
+    # fare_attribute_df.to_csv(f"{GTFS_DATA_PATH}/fare_attribute.csv", index=False)
 
 
 
